@@ -39,3 +39,8 @@
 @keyframes nv-shake { 20% { transform: translateX(-8px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(5px); } }
 @media (prefers-reduced-motion: reduce) { .nv-shake, .nv-chat .dots::after { animation: none; } }
 @media (max-width: 440px) { .nv-chat { width: calc(100% - 32px); } }
+
+.nv-ad { position: fixed; z-index: 980; padding: 10px 12px 10px; color: #fff; border-radius: 6px; font: 13px/1.35 Arial, Helvetica, sans-serif; box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45); cursor: pointer; animation: nv-pop 0.18s ease-out; }
+.nv-shift { margin: 0 0 12px; padding: 14px 16px; color: #fff; border-radius: 6px; font: 13px/1.35 Arial, Helvetica, sans-serif; cursor: pointer; min-height: 96px; }
+@keyframes nv-pop { from { transform: scale(0.7); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .nv-ad { animation: none; } }

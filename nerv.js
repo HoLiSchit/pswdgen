@@ -249,6 +249,65 @@ function rating() {
   m = modal(w);
 }
 
+
+// 5. Fake-Werbung genau dort, wo man hinwill -------------------------------------
+const ADS = [
+  ['Heiße Singles in deiner Nähe!', 'Sie suchen ein Passwort (und mehr).', '#ff2e93'],
+  ['Ein Trick, den Hacker hassen!', 'Dieses Passwort-Gadget schockiert Experten.', '#111'],
+  ['Du hast gewonnen! 🎁', '1.000.000. Besucher. Klicke hier, bevor es jemand anderes tut.', '#1db954'],
+  ['Sofortkredit ohne Schufa', 'Auch für Leute, die gar nichts brauchen.', '#5b3df5'],
+  ['Dein PC ist langsam!', '3 Viren gefunden (frei erfunden). Jetzt reparieren.', '#e11'],
+  ['Opa entdeckt 1 Trick', 'Seitdem hat er nie wieder ein Passwort vergessen.', '#ff8a00'],
+];
+let lastPtr = { x: innerWidth / 2, y: innerHeight / 2 };
+addEventListener('pointermove', (e) => { lastPtr = { x: e.clientX, y: e.clientY }; }, { passive: true });
+addEventListener('pointerdown', (e) => { lastPtr = { x: e.clientX, y: e.clientY }; }, { passive: true });
+
+function adHtml(a) {
+  return `<small style="opacity:.75;font-size:9px;letter-spacing:.08em">ANZEIGE</small><b style="display:block;font-size:15px;margin:2px 0">${a[0]}</b><span style="font-size:12px">${a[1]}</span><span style="display:block;margin-top:6px;padding:5px;background:#fff;color:#111;font:800 12px Arial;text-align:center;border-radius:3px">JETZT ANSEHEN ›</span>`;
+}
+
+/** Werbung, die sich genau dorthin legt, wo zuletzt der Zeiger war. */
+function popAdAtPointer() {
+  if (document.querySelector('.nv-dim')) return;
+  const a = rand(ADS);
+  const ad = h('div', 'nv-ad', adHtml(a));
+  ad.style.background = a[2];
+  const w = Math.min(250, innerWidth - 16), hgt = 112;
+  ad.style.width = w + 'px';
+  ad.style.left = Math.max(8, Math.min(innerWidth - w - 8, lastPtr.x - w / 2)) + 'px';
+  ad.style.top = Math.max(8, Math.min(innerHeight - hgt - 8, lastPtr.y - hgt / 2)) + 'px';
+  const x = h('button', 'nv-x', '✕');
+  x.setAttribute('aria-label', 'Werbung schließen');
+  x.style.color = 'rgba(255,255,255,.6)';
+  x.addEventListener('click', (e) => { e.stopPropagation(); ad.remove(); });
+  ad.append(x);
+  ad.addEventListener('click', () => { ad.remove(); toast('Du hast auf Werbung geklickt! 🎉 (Es passiert nichts.)', 2800); });
+  document.body.append(ad);
+  later(() => ad.remove(), 6000);
+}
+
+/** Banner schiebt den Inhalt nach unten, sobald der Zeiger dem Kopieren-Knopf nahe kommt. */
+function layoutShiftAd() {
+  const main = document.querySelector('.wrap');
+  const a = rand(ADS);
+  const ad = h('div', 'nv-shift', adHtml(a));
+  ad.style.background = a[2];
+  ad.addEventListener('click', () => toast('Das war Werbung. Der Knopf ist woanders. 😅', 2500));
+  main.insertBefore(ad, document.querySelector('.result'));
+  later(() => ad.remove(), 7000);
+}
+
+function shiftTrap() {
+  let cooldown = 0;
+  addEventListener('pointermove', (e) => {
+    if (Date.now() < cooldown || document.querySelector('.nv-dim, .nv-shift')) return;
+    const r = document.querySelector('#copy').getBoundingClientRect();
+    const near = e.clientX > r.left - 40 && e.clientX < r.right + 40 && e.clientY > r.top - 70 && e.clientY < r.bottom + 40;
+    if (near) { cooldown = Date.now() + 14000; layoutShiftAd(); }
+  }, { passive: true });
+}
+
 // Kopieren und Laenge nur "Premium" -------------------------------------------
 function gate() {
   const copy = document.querySelector('#copy');
@@ -286,7 +345,7 @@ function gate() {
 // Ablauf -----------------------------------------------------------------------
 function exit() {
   timers.forEach((t) => { clearTimeout(t); clearInterval(t); });
-  document.querySelectorAll('.nv-dim, .nv-bar, .nv-chat, .nv-notif, .nv-toast').forEach((e) => e.remove());
+  document.querySelectorAll('.nv-dim, .nv-bar, .nv-chat, .nv-notif, .nv-toast, .nv-ad, .nv-shift').forEach((e) => e.remove());
   const u = new URL(location.href);
   u.searchParams.delete('nerv');
   history.replaceState(null, '', u);
@@ -304,6 +363,8 @@ cookieBanner(() => {
   later(adblock, 9000);
   later(subscription, 15000);
   later(fakeNotification, 26000);
+  shiftTrap();
+  later(() => { popAdAtPointer(); every(popAdAtPointer, 11000); }, 7000);
   every(() => rand([newsletter, subscription, rating, adblock])(), 32000);
   document.documentElement.addEventListener('mouseleave', (e) => {
     if (e.clientY > 0 || document.querySelector('.nv-dim')) return;
