@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Passwortgenerator – pswdgen</title>
+  <meta name="description" content="Zufällige, sichere Passwörter direkt im Browser erzeugen. Länge, Sonderzeichen und Zahlen einstellbar, nichts wird übertragen.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#15140f" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script>
+    // Theme vor dem ersten Rendern setzen, sonst blitzt es
+    try { var t = localStorage.getItem('pswdgen:theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <h1 class="brand">pswd<span>gen</span></h1>
+      <button class="icon-btn" id="theme" type="button" aria-label="Darstellung wechseln" title="Hell / Dunkel">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v18" /><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg>
+      </button>
+    </header>
+
+    <section class="result" aria-label="Erzeugtes Passwort">
+      <output id="pw" class="pw" aria-live="off" tabindex="0"></output>
+      <p id="empty" class="empty" hidden>Wähle mindestens eine Zeichengruppe aus.</p>
+      <div class="actions">
+        <button class="btn primary" id="copy" type="button">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>
+          <span id="copy-label">Kopieren</span>
+        </button>
+        <button class="btn" id="regen" type="button">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.9-3M4 5v4h4"/><path d="M4 13a8 8 0 0 0 14.9 3M20 19v-4h-4"/></svg>
+          Neu erzeugen
+        </button>
+      </div>
+      <div class="strength" id="strength" data-level="great">
+        <div class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <p><strong id="s-label">Sehr stark</strong> <span id="s-bits">128 Bit</span></p>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Einstellungen">
+      <div class="row length">
+        <label for="len">Länge</label>
+        <input class="num" id="len-num" type="number" min="4" max="128" inputmode="numeric" aria-label="Länge als Zahl">
+        <input id="len" type="range" min="4" max="128" step="1">
+      </div>
+
+      <ul class="toggles">
+        <li><label class="sw"><input type="checkbox" role="switch" data-opt="lower"><span class="track"></span><span class="name">Kleinbuchstaben</span><code>a–z</code></label></li>
+        <li><label class="sw"><input type="checkbox" role="switch" data-opt="upper"><span class="track"></span><span class="name">Großbuchstaben</span><code>A–Z</code></label></li>
+        <li><label class="sw"><input type="checkbox" role="switch" data-opt="digits"><span class="track"></span><span class="name">Zahlen</span><code>0–9</code></label></li>
+        <li><label class="sw"><input type="checkbox" role="switch" data-opt="symbols"><span class="track"></span><span class="name">Sonderzeichen</span><code>!"§$%&amp;/()=?</code></label></li>
+        <li><label class="sw"><input type="checkbox" role="switch" data-opt="special"><span class="track"></span><span class="name">Spezielle Sonderzeichen</span><code>@€#*+-_.,;:&lt;&gt;[]{}|~^°</code></label></li>
+        <li class="sep"><label class="sw"><input type="checkbox" role="switch" data-opt="avoidAmbiguous"><span class="track"></span><span class="name">Verwechselbare vermeiden</span><code>O 0 l I 1</code></label></li>
+      </ul>
+    </section>
+
+    <footer class="foot">
+      <p>Das Passwort entsteht lokal in deinem Browser mit dem kryptografischen Zufallsgenerator des Systems. Es wird weder übertragen noch gespeichert, nur deine Einstellungen merkt sich der Browser.</p>
+      <p><a href="https://github.com/HoLiSchit/pswdgen">Quellcode auf GitHub</a></p>
+    </footer>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
