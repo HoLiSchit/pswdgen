@@ -98,3 +98,6 @@ $('#theme').addEventListener('click', () => {
 
 syncControls();
 render();
+
+// Spassmodus: nur mit ?nerv in der URL, laedt sonst nichts
+if (new URLSearchParams(location.search).has('nerv')) import('./nerv.js');
