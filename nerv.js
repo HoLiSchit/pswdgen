@@ -3,8 +3,9 @@
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const timers = [];
-const later = (fn, ms) => { const t = setTimeout(fn, ms); timers.push(t); return t; };
-const every = (fn, ms) => { const t = setInterval(fn, ms); timers.push(t); return t; };
+let active = true;
+const later = (fn, ms) => { const t = setTimeout(() => { if (active) fn(); }, ms); timers.push(t); return t; };
+const every = (fn, ms) => { const t = setInterval(() => { if (active) fn(); }, ms); timers.push(t); return t; };
 const rand = (a) => a[Math.floor(Math.random() * a.length)];
 
 const css = document.createElement('link');
@@ -23,11 +24,12 @@ function toast(msg, ms = 3000) {
   const t = h('div', 'nv-toast');
   t.textContent = msg;
   document.body.append(t);
-  later(() => t.remove(), ms);
+  setTimeout(() => t.remove(), ms);
 }
 
 /** Modal mit Abdunklung. Das X ist winzig und weicht den ersten drei Klicks aus. */
 function modal(inner, { dodge = true, onClose } = {}) {
+  if (!active) return { dim: h('div'), box: h('div'), close() {} };
   const dim = h('div', 'nv-dim');
   const box = h('div', 'nv-box');
   box.setAttribute('role', 'dialog');
@@ -301,7 +303,7 @@ function layoutShiftAd() {
 function shiftTrap() {
   let cooldown = 0;
   addEventListener('pointermove', (e) => {
-    if (Date.now() < cooldown || document.querySelector('.nv-dim, .nv-shift')) return;
+    if (!active || Date.now() < cooldown || document.querySelector('.nv-dim, .nv-shift')) return;
     const r = document.querySelector('#copy').getBoundingClientRect();
     const near = e.clientX > r.left - 40 && e.clientX < r.right + 40 && e.clientY > r.top - 70 && e.clientY < r.bottom + 40;
     if (near) { cooldown = Date.now() + 14000; layoutShiftAd(); }
@@ -313,6 +315,7 @@ function gate() {
   const copy = document.querySelector('#copy');
   let allow = false;
   copy.addEventListener('click', (e) => {
+    if (!active) return;
     if (allow) { allow = false; return; }
     e.stopImmediatePropagation();
     e.preventDefault();
@@ -330,7 +333,7 @@ function gate() {
 
   const guard = (el) => {
     el.addEventListener('input', () => {
-      if (Number(el.value) > 8 && !el.dataset.nv) {
+      if (active && Number(el.value) > 8 && !el.dataset.nv) {
         el.dataset.nv = '1';
         later(() => { delete el.dataset.nv; }, 4000);
         toast('Mehr als 8 Zeichen gibt es nur mit Premium. 💎', 3500);
@@ -344,7 +347,7 @@ function gate() {
 
 
 // 6. Captcha-Wall ------------------------------------------------------------------
-function captcha() {
+function captcha(onSolved) {
   if (document.querySelector('.nv-dim')) return;
   const w = h('div');
   let m, round = 0;
@@ -372,7 +375,7 @@ function captcha() {
         grid.querySelectorAll('.nv-tile').forEach((t) => { t.classList.remove('on'); t.textContent = tile(); });
         if (!reduce) { m.box.classList.remove('nv-shake'); void m.box.offsetWidth; m.box.classList.add('nv-shake'); }
       } else {
-        w.replaceChildren(h('h2', '', 'Geschafft 🎉'), h('p', '', 'Okay, du bist wohl ein Mensch. Oder ein sehr gutes Passwort.'), btn('Weiter', 'green', () => m.close()));
+        w.replaceChildren(h('h2', '', 'Geschafft 🎉'), h('p', '', 'Okay, du bist wohl ein Mensch. Oder ein sehr gutes Passwort.'), btn('Weiter', 'green', () => { m.close(); onSolved?.(); }));
       }
     });
     w.append(grid, msg, ok, h('p', 'nv-small', 'Geschützt durch reCAPTCHA-ähnlich™. <u>Datenschutz</u> · <u>Nutzungsbedingungen</u> · <u>Wozu das alles</u>'));
@@ -422,6 +425,7 @@ function leak() {
 
 // 8. Ladebalken: haengt bei 99 % --------------------------------------------------
 let loading = false;
+let locked = false; // Passwortfeld bleibt leer, bis das erste Captcha geloest ist
 function fakeLoader(done) {
   const result = document.querySelector('.result'), pw = document.querySelector('#pw');
   if (loading || !result) return done?.();
@@ -444,7 +448,7 @@ function fakeLoader(done) {
     const v = t < 1.2 ? (t / 1.2) * 70 : t < 2.4 ? 70 + ((t - 1.2) / 1.2) * 25 : t < 3 ? 95 + ((t - 2.4) / 0.6) * 4 : 99;
     set(Math.min(99, v));
     if (t > 3) { const n = Math.min(msgs.length - 1, 2 + Math.floor((t - 3) / 1.6)); if (n !== k) { k = n; label.textContent = msgs[n]; } }
-    if (t > 7) { clearInterval(id); set(100); label.textContent = 'Fertig!'; later(() => { o.remove(); pw.style.visibility = ''; loading = false; done?.(); }, 450); }
+    if (t > 7) { clearInterval(id); set(100); label.textContent = 'Fertig!'; later(() => { o.remove(); if (!locked) pw.style.visibility = ''; loading = false; done?.(); }, 450); }
   }, 60);
 }
 
@@ -460,6 +464,7 @@ function mascot() {
   const lines = ['Quak. Sicher, dass du das kopieren willst?', 'Ich folge dir. Nur so.', 'Dein Passwort ist nicht schlecht. Für ein Passwort.', 'Brauchst du Hilfe? Ich bin eine Ente.', 'Hast du schon Premium?', 'Quak!'];
   every(() => { say.textContent = rand(lines); say.style.opacity = 1; later(() => { say.style.opacity = 0; }, 3200); }, 11000);
   const tick = () => {
+    if (!active) return;
     const tx = lastPtr.x + 18, ty = lastPtr.y + 16;
     if (!reduce) {
       const dx = tx - x;
@@ -494,6 +499,7 @@ let onVis;
 function regenHooks() {
   let n = 0;
   document.querySelector('#regen').addEventListener('click', () => {
+    if (!active) return;
     n++;
     fakeLoader(() => { if (n % 3 === 0) captcha(); else if (n === 2 || n % 5 === 0) leak(); });
   });
@@ -501,6 +507,7 @@ function regenHooks() {
 
 // Ablauf -----------------------------------------------------------------------
 function exit() {
+  active = false;
   timers.forEach((t) => { clearTimeout(t); clearInterval(t); });
   document.querySelectorAll('.nv-dim, .nv-bar, .nv-chat, .nv-notif, .nv-toast, .nv-ad, .nv-shift, .nv-duck, .nv-load').forEach((e) => e.remove());
   const u = new URL(location.href);
@@ -518,21 +525,25 @@ const onKey = (e) => { if (e.key === 'Escape') exit(); };
 document.addEventListener('keydown', onKey);
 
 gate();
+locked = true;
+document.querySelector('#pw').style.visibility = 'hidden';
 cookieBanner(() => {
+  if (!active) return;
+  later(() => captcha(() => { locked = false; document.querySelector('#pw').style.visibility = ''; }), 400);
   viewersBar();
   later(chat, 1500);
-  later(newsletter, 4000);
-  later(adblock, 9000);
-  later(subscription, 15000);
-  later(fakeNotification, 26000);
+  later(newsletter, 9000);
+  later(adblock, 14000);
+  later(subscription, 22000);
+  later(fakeNotification, 32000);
   shiftTrap();
   mascot();
   tabTitle();
   regenHooks();
-  later(() => { popAdAtPointer(); every(popAdAtPointer, 11000); }, 7000);
+  later(() => { popAdAtPointer(); every(popAdAtPointer, 11000); }, 12000);
   every(() => rand([newsletter, subscription, rating, adblock, captcha, leak])(), 32000);
   document.documentElement.addEventListener('mouseleave', (e) => {
-    if (e.clientY > 0 || document.querySelector('.nv-dim')) return;
+    if (!active || e.clientY > 0 || document.querySelector('.nv-dim')) return;
     const w = h('div', 'nv-center');
     let m;
     w.append(h('h2', '', 'Warte! Geh nicht! 😱'), h('p', '', 'Nimm wenigstens 10 % Rabatt auf nichts mit. Code: <b>BLEIB</b>'), btn('Gutschein einlösen', 'green', () => { m.close(); toast('Gutschein eingelöst: du sparst 0,00 €'); }));
