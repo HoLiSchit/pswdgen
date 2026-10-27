@@ -10,7 +10,6 @@ Live: https://mineco.de/tools/pswdgen/
 - Kleinbuchstaben, Großbuchstaben, Zahlen
 - Sonderzeichen `!"§$%&/()=?` und spezielle Sonderzeichen (`@€#*+-_.,;:<>[]{}|~^°` u. a.) getrennt schaltbar
 - Optional: verwechselbare Zeichen (`O 0 l I 1`) vermeiden
-- Stärkeanzeige in Bit
 - Einstellungen und Hell/Dunkel bleiben im Browser (`localStorage`); das Passwort selbst wird nie gespeichert
 
 ## Sicherheit

@@ -36,7 +36,7 @@ export function activeSets(opts) {
 
 export function clampLength(n) {
   const v = Math.round(Number(n));
-  if (!Number.isFinite(v)) return 20;
+  if (!Number.isFinite(v)) return 10;
   return Math.min(MAX_LENGTH, Math.max(MIN_LENGTH, v));
 }
 
@@ -54,22 +54,6 @@ export function generate(opts, rng = globalThis.crypto) {
     [out[i], out[j]] = [out[j], out[i]];
   }
   return out.join('');
-}
-
-/** Entropie in Bit (Naeherung: gleichverteilt aus dem gesamten Pool). */
-export function entropyBits(opts) {
-  const sets = activeSets(opts);
-  if (sets.length === 0) return 0;
-  const size = new Set(sets.map((s) => s.chars).join('')).size;
-  return Math.max(clampLength(opts.length), sets.length) * Math.log2(size);
-}
-
-/** Einstufung fuer die Anzeige. */
-export function strengthLevel(bits) {
-  if (bits < 40) return { id: 'weak', label: 'Schwach' };
-  if (bits < 64) return { id: 'fair', label: 'Ausreichend' };
-  if (bits < 100) return { id: 'good', label: 'Stark' };
-  return { id: 'great', label: 'Sehr stark' };
 }
 
 /** Zeichenklasse fuer die Einfaerbung in der Anzeige. */

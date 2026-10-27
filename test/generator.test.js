@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { generate, activeSets, entropyBits, clampLength, randomInt, SETS, AMBIGUOUS } from '../generator.js';
+import { generate, activeSets, clampLength, randomInt, SETS, AMBIGUOUS } from '../generator.js';
 
 const base = { length: 24, lower: true, upper: true, digits: true, symbols: true, special: true, avoidAmbiguous: false };
 
@@ -8,7 +8,7 @@ test('Laenge stimmt und wird begrenzt', () => {
   assert.equal(generate({ ...base, length: 30 }).length, 30);
   assert.equal(clampLength(1), 4);
   assert.equal(clampLength(9999), 128);
-  assert.equal(clampLength('abc'), 20);
+  assert.equal(clampLength('abc'), 10);
 });
 
 test('nichts aktiv ergibt leeren String', () => {
@@ -49,10 +49,7 @@ test('randomInt deckt den Bereich gleichmaessig ab', () => {
   for (const c of counts) assert.ok(c > 9000 && c < 11000, `Verteilung auffaellig: ${counts}`);
 });
 
-test('Entropie waechst mit Laenge und Pool', () => {
-  const a = entropyBits({ length: 10, lower: true });
-  const b = entropyBits({ length: 20, lower: true });
-  const c = entropyBits({ length: 20, lower: true, upper: true });
-  assert.ok(b > a && c > b);
+test('activeSets liefert nur aktive Gruppen', () => {
   assert.equal(activeSets({ lower: true }).length, 1);
+  assert.equal(activeSets({}).length, 0);
 });

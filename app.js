@@ -1,12 +1,11 @@
-import { generate, entropyBits, strengthLevel, charClass, clampLength, MIN_LENGTH, MAX_LENGTH } from './generator.js';
+import { generate, charClass, clampLength, MIN_LENGTH, MAX_LENGTH } from './generator.js';
 
 const KEY = 'pswdgen:settings';
-const DEFAULTS = { length: 20, lower: true, upper: true, digits: true, symbols: true, special: false, avoidAmbiguous: false };
+const DEFAULTS = { length: 10, lower: true, upper: true, digits: true, symbols: false, special: false, avoidAmbiguous: false };
 
 const $ = (s) => document.querySelector(s);
 const pwEl = $('#pw'), emptyEl = $('#empty'), copyBtn = $('#copy'), copyLabel = $('#copy-label');
 const lenRange = $('#len'), lenNum = $('#len-num');
-const strengthEl = $('#strength');
 
 let state = load();
 let current = '';
@@ -46,12 +45,6 @@ function render() {
   emptyEl.hidden = !none;
   pwEl.hidden = none;
   copyBtn.disabled = none;
-
-  const bits = entropyBits(state);
-  const lvl = strengthLevel(bits);
-  strengthEl.dataset.level = none ? 'none' : lvl.id;
-  $('#s-label').textContent = none ? '–' : lvl.label;
-  $('#s-bits').textContent = none ? '' : `${Math.round(bits)} Bit`;
 }
 
 function syncControls() {

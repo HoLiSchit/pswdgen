@@ -76,16 +76,6 @@ button:focus-visible, input:focus-visible + .track, .pw:focus-visible, a:focus-v
 .btn.primary.done { background: var(--ok); border-color: var(--ok); color: #fff; }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-.strength { display: flex; align-items: center; gap: 14px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
-.bars { display: flex; gap: 4px; flex: none; }
-.bars i { width: 28px; height: 6px; border-radius: 3px; background: var(--line); transition: background 0.2s; }
-.strength p { margin: 0; font-size: 0.9rem; color: var(--muted); }
-.strength strong { color: var(--ink); margin-right: 6px; }
-.strength[data-level="weak"] .bars i:nth-child(-n+1) { background: #d1382b; }
-.strength[data-level="fair"] .bars i:nth-child(-n+2) { background: #d9921f; }
-.strength[data-level="good"] .bars i:nth-child(-n+3) { background: #8aa82a; }
-.strength[data-level="great"] .bars i { background: var(--ok); }
-
 /* Einstellungen */
 .panel { margin-top: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 6px 20px; }
 .row.length { display: grid; grid-template-columns: auto 76px; align-items: center; gap: 10px 14px; padding: 16px 0 18px; border-bottom: 1px solid var(--line); }
