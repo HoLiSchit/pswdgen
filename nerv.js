@@ -342,13 +342,175 @@ function gate() {
   guard(document.querySelector('#len-num'));
 }
 
+
+// 6. Captcha-Wall ------------------------------------------------------------------
+function captcha() {
+  if (document.querySelector('.nv-dim')) return;
+  const w = h('div');
+  let m, round = 0;
+  const POOL = ['🚗', '🌳', '🚌', '🏠', '🚲', '🐕', '🪧', '🚦', '🚦', '🌉', '🛵', '🐈'];
+  const fails = ['Falsch. Du hast die Ampel hinter dem Bus übersehen.', 'Nicht ganz. Zebrastreifen-Ampeln zählen auch.', 'Fast! Aber eine Ampel war nur zur Hälfte im Bild. Bitte erneut.'];
+
+  const check = () => {
+    w.replaceChildren(h('h2', '', 'Beweise, dass du kein Passwort bist'), h('p', '', 'Wähle alle Bilder mit <b>Ampeln</b>.'));
+    const grid = h('div', 'nv-grid');
+    const tile = () => rand(POOL);
+    for (let i = 0; i < 9; i++) {
+      const t = h('button', 'nv-tile', tile());
+      t.type = 'button';
+      t.addEventListener('click', () => {
+        t.classList.toggle('on');
+        if (t.textContent === '🚦') later(() => { t.classList.remove('on'); t.textContent = tile(); }, 500); // Kachel "laedt nach"
+      });
+      grid.append(t);
+    }
+    const msg = h('p', 'nv-small');
+    msg.style.color = '#e11';
+    const ok = btn('Bestätigen', '', () => {
+      if (round < fails.length) {
+        msg.textContent = fails[round++];
+        grid.querySelectorAll('.nv-tile').forEach((t) => { t.classList.remove('on'); t.textContent = tile(); });
+        if (!reduce) { m.box.classList.remove('nv-shake'); void m.box.offsetWidth; m.box.classList.add('nv-shake'); }
+      } else {
+        w.replaceChildren(h('h2', '', 'Geschafft 🎉'), h('p', '', 'Okay, du bist wohl ein Mensch. Oder ein sehr gutes Passwort.'), btn('Weiter', 'green', () => m.close()));
+      }
+    });
+    w.append(grid, msg, ok, h('p', 'nv-small', 'Geschützt durch reCAPTCHA-ähnlich™. <u>Datenschutz</u> · <u>Nutzungsbedingungen</u> · <u>Wozu das alles</u>'));
+  };
+
+  const box = h('label', 'nv-check');
+  const cb = h('input');
+  cb.type = 'checkbox';
+  box.append(cb, h('span', '', 'Ich bin kein Passwort'));
+  cb.addEventListener('change', () => {
+    box.replaceChildren(h('span', 'nv-spin dark'), h('span', '', 'Prüfe…'));
+    later(check, 1600);
+  });
+  w.append(h('h2', '', 'Kurze Sicherheitsprüfung'), h('p', '', 'Wir müssen sichergehen, dass hier ein Mensch sitzt.'), box);
+  m = modal(w, { dodge: false });
+}
+
+// 7. Fake-Datenleck --------------------------------------------------------------
+function leak() {
+  if (document.querySelector('.nv-dim')) return;
+  const pw = document.querySelector('#pw').textContent;
+  const masked = pw.slice(0, 2) + '•'.repeat(Math.max(0, pw.length - 2));
+  const all = ['KrümelBook (2019) · 530 Mio. Konten', 'HotelPasswort24 (2021) · 12 Mio. Konten', 'MeinFitnessHamster (2023) · 4 Mio. Konten', 'Pizzabote.de (2020) · 800.000 Konten', 'Digitaler Reisepass Süd (2022) · 2 Mio. Konten', 'Katzenvideos Plus (2018) · 90 Mio. Konten'];
+  const picks = all.sort(() => Math.random() - 0.5).slice(0, 3);
+  const w = h('div');
+  let m;
+  w.append(
+    h('span', 'nv-badge', '⚠ SICHERHEITSWARNUNG'),
+    h('h2', '', 'Dein Passwort wurde in 3 Datenlecks gefunden!'),
+    h('p', '', `<code style="background:#eee;padding:2px 6px">${masked.replace(/[<>&]/g, '')}</code> taucht in diesen Listen auf:`),
+    h('ul', 'nv-list', picks.map((p) => `<li>🔓 ${p}</li>`).join('')),
+    h('p', 'nv-small', 'Hacker könnten dein Passwort bereits kennen. Vielleicht. Wahrscheinlich. Handle jetzt.'),
+  );
+  w.append(btn('Passwort reinigen · 2,99 €/Monat', 'green', () => {
+    w.replaceChildren(
+      h('h2', '', 'Kleiner Scherz 😄'),
+      h('p', '', 'Dein Passwort wurde gerade erst erzeugt und steht in keinem Leck. Es gibt keine Reinigung, kein Abo, und nichts wurde gesendet oder gebucht.'),
+      btn('Puh, danke', 'ghost', () => m.close()),
+    );
+  }));
+  const later_ = h('button', 'nv-link', 'Später erinnern (nicht empfohlen)');
+  later_.type = 'button';
+  later_.addEventListener('click', () => { m.close(); toast('Wir erinnern dich in 5 Minuten. Und danach. 🔔'); });
+  w.append(later_);
+  m = modal(w);
+}
+
+// 8. Ladebalken: haengt bei 99 % --------------------------------------------------
+let loading = false;
+function fakeLoader(done) {
+  const result = document.querySelector('.result'), pw = document.querySelector('#pw');
+  if (loading || !result) return done?.();
+  loading = true;
+  result.style.position = 'relative';
+  const o = h('div', 'nv-load');
+  o.style.top = pw.offsetTop + 'px';
+  const label = h('div', 'nv-load-t', 'Passwort wird kalkuliert…');
+  const bar = h('div', 'nv-load-bar', '<i></i>');
+  const pct = h('div', 'nv-load-p', '0 %');
+  o.append(label, bar, pct);
+  result.append(o);
+  pw.style.visibility = 'hidden';
+  const t0 = performance.now();
+  const set = (v) => { bar.firstChild.style.width = v + '%'; pct.textContent = Math.floor(v) + ' %'; };
+  const msgs = ['Passwort wird kalkuliert…', 'Zufall wird angeworfen…', 'Warte auf den Server (es gibt keinen)…', 'Fast geschafft…', 'Wirklich gleich…'];
+  let k = 0;
+  const id = every(() => {
+    const t = (performance.now() - t0) / 1000;
+    const v = t < 1.2 ? (t / 1.2) * 70 : t < 2.4 ? 70 + ((t - 1.2) / 1.2) * 25 : t < 3 ? 95 + ((t - 2.4) / 0.6) * 4 : 99;
+    set(Math.min(99, v));
+    if (t > 3) { const n = Math.min(msgs.length - 1, 2 + Math.floor((t - 3) / 1.6)); if (n !== k) { k = n; label.textContent = msgs[n]; } }
+    if (t > 7) { clearInterval(id); set(100); label.textContent = 'Fertig!'; later(() => { o.remove(); pw.style.visibility = ''; loading = false; done?.(); }, 450); }
+  }, 60);
+}
+
+// 9. Maskottchen und Tab-Titel ----------------------------------------------------
+let duckRaf = 0;
+function mascot() {
+  const d = h('div', 'nv-duck');
+  const emoji = h('span', 'nv-duck-e', '🦆');
+  const say = h('div', 'nv-duck-say');
+  d.append(emoji, say);
+  document.body.append(d);
+  let x = innerWidth - 80, y = innerHeight - 120, flip = 1;
+  const lines = ['Quak. Sicher, dass du das kopieren willst?', 'Ich folge dir. Nur so.', 'Dein Passwort ist nicht schlecht. Für ein Passwort.', 'Brauchst du Hilfe? Ich bin eine Ente.', 'Hast du schon Premium?', 'Quak!'];
+  every(() => { say.textContent = rand(lines); say.style.opacity = 1; later(() => { say.style.opacity = 0; }, 3200); }, 11000);
+  const tick = () => {
+    const tx = lastPtr.x + 18, ty = lastPtr.y + 16;
+    if (!reduce) {
+      const dx = tx - x;
+      x += dx * 0.06; y += (ty - y) * 0.06;
+      if (Math.abs(dx) > 4) flip = dx > 0 ? 1 : -1;
+    } else { x = innerWidth - 60; y = innerHeight - 100; }
+    d.style.transform = `translate(${Math.max(0, Math.min(innerWidth - 40, x))}px, ${Math.max(0, Math.min(innerHeight - 40, y))}px)`;
+    emoji.style.transform = `scaleX(${-flip})`;
+    duckRaf = requestAnimationFrame(tick);
+  };
+  tick();
+}
+
+const baseTitle = document.title;
+function tabTitle() {
+  const sad = ['Komm zurück 😢', 'Hallo? 🥺', 'Dein Passwort vermisst dich', 'Ich warte… ⏳', 'Bitte geh nicht weg 💔'];
+  let i = 0, t;
+  document.addEventListener('visibilitychange', onVis = () => {
+    clearInterval(t);
+    if (document.hidden) {
+      document.title = sad[0];
+      t = every(() => { i = (i + 1) % sad.length; document.title = sad[i]; }, 1500);
+    } else {
+      document.title = 'Willkommen zurück! 🎉';
+      later(() => { document.title = baseTitle; }, 2500);
+    }
+  });
+}
+let onVis;
+
+// Ablauf der Regen-Klicks: Ladebalken, dann Captcha oder Leck-Warnung
+function regenHooks() {
+  let n = 0;
+  document.querySelector('#regen').addEventListener('click', () => {
+    n++;
+    fakeLoader(() => { if (n % 3 === 0) captcha(); else if (n === 2 || n % 5 === 0) leak(); });
+  });
+}
+
 // Ablauf -----------------------------------------------------------------------
 function exit() {
   timers.forEach((t) => { clearTimeout(t); clearInterval(t); });
-  document.querySelectorAll('.nv-dim, .nv-bar, .nv-chat, .nv-notif, .nv-toast, .nv-ad, .nv-shift').forEach((e) => e.remove());
+  document.querySelectorAll('.nv-dim, .nv-bar, .nv-chat, .nv-notif, .nv-toast, .nv-ad, .nv-shift, .nv-duck, .nv-load').forEach((e) => e.remove());
   const u = new URL(location.href);
   u.searchParams.delete('nerv');
   history.replaceState(null, '', u);
+  cancelAnimationFrame(duckRaf);
+  if (onVis) document.removeEventListener('visibilitychange', onVis);
+  document.title = baseTitle;
+  document.querySelector('#pw').style.visibility = '';
+  loading = false;
   toast('Ruhe. 😌', 2500);
   document.removeEventListener('keydown', onKey);
 }
@@ -364,8 +526,11 @@ cookieBanner(() => {
   later(subscription, 15000);
   later(fakeNotification, 26000);
   shiftTrap();
+  mascot();
+  tabTitle();
+  regenHooks();
   later(() => { popAdAtPointer(); every(popAdAtPointer, 11000); }, 7000);
-  every(() => rand([newsletter, subscription, rating, adblock])(), 32000);
+  every(() => rand([newsletter, subscription, rating, adblock, captcha, leak])(), 32000);
   document.documentElement.addEventListener('mouseleave', (e) => {
     if (e.clientY > 0 || document.querySelector('.nv-dim')) return;
     const w = h('div', 'nv-center');

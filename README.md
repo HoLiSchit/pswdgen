@@ -14,7 +14,7 @@ Live: https://mineco.de/tools/pswdgen/
 
 ## Nervmodus
 
-`?nerv` an die URL hängen (`/tools/pswdgen/?nerv`) startet eine Parodie auf aufdringliche Seiten: Cookie-Banner mit versteckter Ablehnung, Newsletter, Abo-Popup mit Fake-Countdown, Chat, Werbeblocker-Hinweis und mehr. Alles ist Theater, es gibt keinen Checkout und nichts wird gesendet oder gespeichert. Mit Esc ist sofort Ruhe. Ohne den Zusatz wird `nerv.js` nicht einmal geladen.
+`?nerv` an die URL hängen (`/tools/pswdgen/?nerv`) startet eine Parodie auf aufdringliche Seiten: Cookie-Banner mit versteckter Ablehnung, Newsletter, Abo-Popup mit Fake-Countdown, Chat, Werbeblocker-Hinweis, Fake-Werbung, Captcha-Wall, Fake-Datenleck, Ladebalken bei 99 %, Entenmaskottchen und ein jammernder Tab-Titel. Alles ist Theater, es gibt keinen Checkout und nichts wird gesendet oder gespeichert. Mit Esc ist sofort Ruhe. Ohne den Zusatz wird `nerv.js` nicht einmal geladen.
 
 ## Sicherheit
 
