@@ -1,7 +1,7 @@
 import { generate, charClass, clampLength, MIN_LENGTH, MAX_LENGTH } from './generator.js';
 
 const KEY = 'pswdgen:settings';
-const DEFAULTS = { length: 10, lower: true, upper: true, digits: true, symbols: false, special: false, avoidAmbiguous: false };
+const DEFAULTS = { length: 10, lower: true, upper: true, digits: true, symbols: false, special: false, avoidAmbiguous: true };
 
 const $ = (s) => document.querySelector(s);
 const pwEl = $('#pw'), emptyEl = $('#empty'), copyBtn = $('#copy'), copyLabel = $('#copy-label');
