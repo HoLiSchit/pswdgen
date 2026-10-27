@@ -1,0 +1,5 @@
+# .git und Entwicklungsdateien nicht ausliefern
+RedirectMatch 404 /\.git
+<FilesMatch "^(package\.json|README\.md|LICENSE)$">
+  Require all denied
+</FilesMatch>
